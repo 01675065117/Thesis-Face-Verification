@@ -1,0 +1,37 @@
+{% extends "base.html" %} {% block title %} Changed {% endblock %} {% block content %}
+<p><h1 align="center">Face Verification</h1></p>
+<div class="container">
+<div class="row">
+    <h2>Select 2 files to compare</h2>
+<!--    <p>-->
+<!--        {% with messages = get_flashed_messages() %}-->
+<!--          {% if messages %}-->
+<!--            <ul>-->
+<!--            {% for message in messages %}-->
+<!--              <li>{{ message }}</li>-->
+<!--            {% endfor %}-->
+<!--            </ul>-->
+<!--          {% endif %}-->
+<!--        {% endwith %}-->
+<!--    </p>-->
+    {% if pic %}
+        <div>
+            <img src="{{ url_for('imgV.display_image', pic=pic) }}">
+        </div>
+    {% endif %}
+    <form method="POST" action="/verify" enctype="multipart/form-data">
+        <dl>
+            <p>
+                <input type="file" name="files1" class="form-control" autocomplete="off" required>
+            </p>
+            <p>
+                <input type="file" name="files2" class="form-control" autocomplete="off" required>
+            </p>
+        </dl>
+        <p>
+            <input type="submit" value="Submit" class="btn btn-info">
+        </p>
+    </form>
+</div>
+</div>
+{% endblock %}
