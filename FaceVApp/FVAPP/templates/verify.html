@@ -14,11 +14,7 @@
 <!--          {% endif %}-->
 <!--        {% endwith %}-->
 <!--    </p>-->
-    {% if pic %}
-        <div>
-            <img src="{{ url_for('imgV.display_image', pic=pic) }}">
-        </div>
-    {% endif %}
+
     <form method="POST" action="/verify" enctype="multipart/form-data">
         <dl>
             <p>
@@ -32,6 +28,11 @@
             <input type="submit" value="Submit" class="btn btn-info">
         </p>
     </form>
+    {% if pic %}
+        <div>
+                <img src="data:image/jpeg;base64,{{ pic }}">
+        </div>
+    {% endif %}
 </div>
 </div>
 {% endblock %}

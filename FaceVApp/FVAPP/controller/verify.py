@@ -1,3 +1,6 @@
+import base64
+import io
+
 from flask import Flask, flash, request, redirect, url_for, render_template, Blueprint
 from FVAPP.models import Image, User
 import os
@@ -15,6 +18,11 @@ from os import listdir
 import os.path as path
 import numpy as np
 from keras.models import load_model
+from scipy import spatial
+from keras.models import load_model
+from numpy import dot
+from numpy.linalg import norm
+from sklearn.metrics.pairwise import cosine_similarity,cosine_distances
 
 model = load_model('D:/Tai-Lieu-Hoc/TNCKH/Graduation_Thesis/facenet_keras.h5')
 imgV = Blueprint('imgV', __name__)
@@ -77,10 +85,20 @@ def verify_image():
     else:
         flash('Allowed image types are - png, jpg, jpeg, gif')
         return redirect(request.url)
+    user1 = str(current_user.id)
+    Ims = Image.query.filter_by(user_id=user1).order_by(Image.path).all()
+    for im in Ims:
+        print(im.path)
 
-    compare_images(newTrainX1, newTrainX2, current_user.first_name)
+    compare_images(pixels1, pixels2, newTrainX1, newTrainX2, current_user.first_name)
 
-    return render_template('verify.html', pic = current_user.first_name, user=current_user)
+    pic = current_user.first_name + '.jpg'
+    img1 = Image1.open(os.path.join(UPLOAD_FOLDER, pic))
+    data = io.BytesIO()
+    img1.save(data,"JPEG")
+
+    encode_image = base64.b64encode(data.getvalue())
+    return render_template('verify.html', pic = encode_image.decode("UTF-8"), user=current_user)
 
 
 def extract_face(filename, required_size=(160, 160)):
@@ -133,28 +151,32 @@ def mse(imageA, imageB):
     return err
 
 
-def compare_images(imageA, imageB, title):
+def compare_images(path1, path2, imageA, imageB, title):
     # compute the mean squared error and structural similarity
     # index for the images
     m = mse(imageA, imageB)
+    spicy = 1 - spatial.distance.cosine(imageA, imageB)
+    imgB_T = imageB.T
+    nump = imageA.dot(imgB_T)/ (np.linalg.norm(imageA, axis=1) * np.linalg.norm(imgB_T))
+    skl = 1 - cosine_distances(imageA,imageB)
     # s = ssim(imageA, imageB)
     # setup the figure
     fig = plt.figure(title)
-    plt.suptitle("MSE: %.2f" % (m))
+    plt.suptitle("MSE: %.5f, Spicy: %.5f, Numpy: %.5f, Sklearn: %.5f" % (m, spicy, nump, skl))
     # plt.suptitle("MSE: %.2f, SSIM: %.2f" % (m, s))
     # show first image
     ax = fig.add_subplot(1, 2, 1)
-    plt.imshow(imageA, cmap=plt.cm.gray)
+    plt.imshow(path1, cmap=plt.cm.gray)
     plt.axis("off")
     # show the second image
     ax = fig.add_subplot(1, 2, 2)
-    plt.imshow(imageB, cmap=plt.cm.gray)
+    plt.imshow(path2, cmap=plt.cm.gray)
     plt.axis("off")
     # show the images
     plt.savefig(UPLOAD_FOLDER + title + '.jpg')
 
 
-@imgV.route('/verify/display/<pic>')
-def display_image(pic):
-    # print('display_image filename: ' + filename)
-    return redirect(url_for('static', filename='uploads/' + pic), code=301)
+# @imgV.route('/verify/<pic>')
+# def display_image_verify(pic):
+#     # print('display_image filename: ' + filename)
+#     return redirect(url_for('static', pic='uploads/' + pic), code=301)
